@@ -1,0 +1,157 @@
+openapi: 3.0.3
+info:
+  title: Sentiment Inference API
+  version: "1.0.0"
+  description: API для инференса модели тональной классификации.
+servers:
+  - url: http://localhost:8000
+    description: Локальный запуск
+paths:
+  /predict:
+    post:
+      summary: Предсказать тональность текста
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: Успешный ответ с вероятностями классов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PredictResponse'
+        '400':
+          description: Некорректный запрос
+        '500':
+          description: Ошибка инференса модели
+  /csv:
+    post:
+      summary: Предсказать тональность для CSV-файла
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV-файл со столбцами ID и text
+      responses:
+        '200':
+          description: CSV с предсказаниями
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Ошибка чтения/валидации CSV
+        '500':
+          description: Ошибка инференса модели
+  /lemmatize:
+    post:
+      summary: Провести лемматизацию текста
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: Результат лемматизации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LemmatizeResponse'
+        '500':
+          description: Ошибка лемматизации
+  /ner:
+    post:
+      summary: Извлечь именованные сущности из текста
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PredictRequest'
+      responses:
+        '200':
+          description: Список найденных сущностей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NerResponse'
+        '500':
+          description: Ошибка извлечения сущностей
+  /health:
+    get:
+      summary: Проверка статуса сервиса
+      responses:
+        '200':
+          description: Сервис доступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  schemas:
+    PredictRequest:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: Входной текст
+    PredictResponse:
+      type: object
+      properties:
+        prediction:
+          type: integer
+          description: Предсказанная метка класса
+        negative_score:
+          type: number
+          format: float
+          description: Вероятность негативного класса (в процентах)
+        neutral_score:
+          type: number
+          format: float
+          description: Вероятность нейтрального класса (в процентах)
+        positive_score:
+          type: number
+          format: float
+          description: Вероятность позитивного класса (в процентах)
+    LemmatizeResponse:
+      type: object
+      properties:
+        output:
+          type: string
+          description: Результат лемматизации
+    NerResponse:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: string
+          description: Список найденных сущностей
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Статус сервиса
+        device:
+          type: string
+          description: Устройство, на котором работает модель
+        compiled:
+          type: boolean
+          description: Применена ли компиляция модели
+        attention:
+          type: string
+          description: Используемая реализация внимания

@@ -1,0 +1,61 @@
+supervise:
+  model_name_or_path: jhu-clsp/mmBERT-base
+  input_parquet: data/raw_texts.parquet
+  output_dir: data/clustering/supervised
+  batch_size: 32
+  device: cuda
+  num_workers: 0
+  num_shards: 4
+  dtype: float16
+  resume: false
+  progress: true
+
+normalize_and_pca:
+  input_dir: data/clustering/supervised
+  output_dir: data/clustering/pca
+  n_components: 50
+  batch_size: 1024
+  device: cpu
+  overwrite: false
+  use_gpu_pca: false
+
+train:
+  input_dir: data/clustering/pca
+  centroids_out: data/clustering/centroids/centroids.parquet
+  model_out: data/clustering/centroids/kmeans.joblib
+  run_mode: train  # options: train, predict
+  pca_column: pca
+  centroid_column: cluster_id
+  n_clusters: 200
+  batch_size: 4096
+  max_iter: 100
+  init_size: 100000
+  random_state: 42
+  gpu: false
+  num_workers: 1
+  sample_limit: null
+  progress: true
+  log_level: INFO
+
+purity_counter:
+  shards_dir: data/clustering/pca
+  centroids_path: data/clustering/centroids/centroids.parquet
+  teacher_label_column: teacher_label
+  cluster_column: cluster_id
+  progress: true
+  log_level: INFO
+
+update_dataset:
+  shards_dir: data/clustering/pca
+  centroids_path: data/clustering/centroids/centroids.parquet
+  output_path: data/clustering/updated_dataset.parquet
+  metric_purity_threshold: 0.9
+  metric_max_prob_threshold: 0.8
+  classification_purity_threshold: 0.8
+  classification_max_prob_threshold: 0.7
+  text_column: text
+  label_column: label
+  cluster_id_column: cluster_id
+  probs_column: probs
+  progress: true
+  log_level: INFO

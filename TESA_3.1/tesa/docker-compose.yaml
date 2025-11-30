@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  web:
+    image: front:latest
+    ports:
+      - "3000:80" #nginx на сервере - proxy с 80 на 3000 порт (для поддомена)
+    restart: unless-stopped
+    networks:
+      - site-network
+
+networks:
+  site-network:
+    driver: bridge

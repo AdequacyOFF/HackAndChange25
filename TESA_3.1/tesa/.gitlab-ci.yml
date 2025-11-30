@@ -1,0 +1,56 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: docker:28.5
+  tags:
+    - docker
+    - nexus
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+
+  # before_script:
+  #   - apk add --no-cache docker
+
+  script:
+    - docker build -t front:latest .
+    - docker save front:latest > front.tar
+
+  artifacts:
+    paths:
+      - front.tar
+    expire_in: 10 minutes
+
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  image: docker:28.5
+  tags:
+    - docker
+    - nexus
+  dependencies:
+    - build
+  services:
+    - name: docker:dind
+      alias: docker
+  variables:
+    COMPOSE_PROJECT_NAME: "friends-front"
+    DOCKER_TLS_CERTDIR: ""
+
+  before_script:
+  - apk add --no-cache docker-compose
+  # пока без ssl
+
+  script:
+    - docker load < front.tar
+    - docker-compose up -d
+
+  only:
+  - main
