@@ -1,0 +1,43 @@
+model_name: /home/user5/text/.models/mm-bert
+
+data:
+  parquet_path: ../.data/dataset.parquet
+  val_ratio: 0.01
+  num_workers: 4
+  upsample: false
+
+training:
+  batch_size: 1024
+  num_epochs: 10
+  gradient_accumulation_steps: 4
+  max_seq_length: 2048
+  mixed_precision: true
+  attention_implementation: flash_attention_2
+  # gradient_clip_val: 1.0
+  label_smoothing: 0.001
+  seed: 42
+  resume_from: null
+
+optimizer:
+  learning_rate: 8.0e-5
+  weight_decay: 0.01
+
+scheduler:
+  warmup_steps: 10
+  num_training_steps: null
+  name: cosine
+  num_cycles: 0.5
+
+checkpointing:
+  checkpoints_dir: checkpoints_1
+  save_every_n_bathces: 100
+  save_best_by: f1
+
+neptune:
+  project: -
+  api_token: ***
+  experiment_name: text-classification-run
+  run_id: null
+  tags: [text-classification, demo]
+  dependencies_path: .
+  # env_path: .env

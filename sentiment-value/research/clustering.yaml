@@ -1,0 +1,70 @@
+supervise:
+  model_name_or_path: /home/user5/text/.models/mm-bert-4
+  input_parquet: /home/user5/text/.data/dedup.parquet
+  output_dir: /home/user5/text/shards2
+  batch_size: 32
+  device: cuda
+  num_workers: 4
+  num_shards: 10
+  dtype: bfloat16
+  resume: true
+  progress: true
+
+normalize_and_pca:
+  input_dir: /home/user5/text/shards2
+  output_dir: /home/user5/text/shards2
+  n_components: 128
+  batch_size: 1024
+  device: cpu
+  overwrite: true
+  use_gpu_pca: false
+
+train:
+  input_dir: /home/user5/text/shards2
+  centroids_out: /home/user5/text/clustres_output1/centroids.parquet
+  model_out: /home/user5/text/clustres_output1/kmeans.joblib
+  run_mode: train  # options: train, predict
+  pca_column: pca
+  centroid_column: centroid_id
+  n_clusters: 2000
+  batch_size: 2048
+  max_iter: 100
+  init_size: 100000
+  random_state: 42
+  gpu: false
+  num_workers: 1
+  sample_limit: null
+  progress: true
+  log_level: INFO
+
+purity_counter:
+  shards_dir: /home/user5/text/shards2
+  centroids_path: /home/user5/text/clustres_output1/centroids.parquet
+  teacher_label_column: label
+  cluster_column: centroid_id
+  progress: true
+  log_level: INFO
+
+update_dataset:
+  shards_dir: /home/user5/text/shards2
+  centroids_path: /home/user5/text/clustres_output1/centroids.parquet
+  output_path: /home/user5/text/clustres_output1/updated_dataset.parquet
+  metric_purity_threshold: 0.9
+  metric_max_prob_threshold: 0.9
+  classification_purity_threshold: 0.9
+  classification_max_prob_threshold: 0.9
+  text_column: text
+  label_column: label
+  cluster_id_column: centroid_id
+  probs_column: probs
+  downsample: true
+  progress: true
+  log_level: INFO
+
+cluster_label_map:
+  shards_dir: /home/user5/text/shards2
+  output_path: /home/user5/text/clustres_output1/cluster_to_label.yaml
+  cluster_column: centroid_id
+  label_column: label
+  progress: true
+  log_level: INFO
